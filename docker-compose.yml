@@ -1,0 +1,90 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./services/api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JETSON_API_KEY: ${JETSON_API_KEY}
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-http://ml:3002}
+      ML_SECRET: ${ML_SECRET}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      NODE_ENV: ${NODE_ENV:-production}
+
+  ml:
+    build: ./services/ml
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ML_SECRET: ${ML_SECRET}
+      MODEL_STORE_PATH: /app/models
+      NODE_ENV: ${NODE_ENV:-production}
+    volumes:
+      - model_store:/app/models
+
+  scheduler:
+    build: ./services/scheduler
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-http://ml:3002}
+      ML_SECRET: ${ML_SECRET}
+      OPEN_METEO_URL: ${OPEN_METEO_URL:-https://api.open-meteo.com}
+      NAGER_DATE_URL: ${NAGER_DATE_URL:-https://date.nager.at}
+      COUNTRY_CODE: ${COUNTRY_CODE:-DE}
+      LIBRARY_LAT: ${LIBRARY_LAT}
+      LIBRARY_LON: ${LIBRARY_LON}
+      TZ: Europe/Berlin
+      NODE_ENV: ${NODE_ENV:-production}
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NODE_ENV: ${NODE_ENV:-production}
+
+  nginx:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+      - frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+
+volumes:
+  db_data:
+  model_store:

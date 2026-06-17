@@ -1,0 +1,50 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  api:
+    build:
+      context: ./services/api
+    volumes:
+      - ./services/api/src:/app/src:ro
+    environment:
+      NODE_ENV: development
+    command: node --watch src/index.js
+    ports:
+      - "3001:3001"
+
+  ml:
+    volumes:
+      - ./services/ml/src:/app/src:ro
+      - model_store:/app/models
+    environment:
+      NODE_ENV: development
+    command: node --watch src/index.js
+    ports:
+      - "3002:3002"
+
+  scheduler:
+    volumes:
+      - ./services/scheduler/src:/app/src:ro
+    environment:
+      NODE_ENV: development
+    command: node --watch src/index.js
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    volumes:
+      - ./frontend/src:/app/src:ro
+      - ./frontend/public:/app/public:ro
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    command: npm run dev
+    ports:
+      - "3000:3000"
+
+  nginx:
+    profiles:
+      - prod
