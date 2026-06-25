@@ -1,4 +1,5 @@
 .env
+.gitignore
 nginx/certs/
 node_modules/
 **/node_modules/

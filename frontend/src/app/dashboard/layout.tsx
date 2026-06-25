@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { BarChart2, Brain, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { API_BASE } from '@/lib/api';
 
 const navItems = [
   { href: '/dashboard',    label: 'Übersicht',  icon: BarChart2 },
@@ -15,7 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router   = useRouter();
 
   async function logout() {
-    await fetch('/api/v1/auth/logout', { method: 'POST', credentials: 'include' });
+    await fetch(`${API_BASE}/auth/logout`, { method: 'POST', credentials: 'include' });
     router.push('/login');
   }
 

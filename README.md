@@ -7,6 +7,15 @@ admin dashboard and a public embeddable widget.
 
 ---
 
+## Version History
+
+| Version | Date       | Changes |
+|---------|------------|---------|
+| v1.1.0  | 2026-06-25 | Removed Next.js API proxy rewrites — browser now calls the API directly via `NEXT_PUBLIC_API_URL`. Centralized API base URL via exported `API_BASE` in `api.ts`. Updated `login` and `dashboard/layout` to use `API_BASE`. Converted `postcss.config.js` from ESM to CommonJS. Added `env.d.ts` for TypeScript environment variable declarations. |
+| v1.0.0  | 2026-06-25 | Initial release: Docker Compose stack with Next.js frontend, Node.js API, TF.js ML service, PostgreSQL, nginx, and scheduler. |
+
+---
+
 ## System Architecture
 
 ```
@@ -42,6 +51,10 @@ scheduler ───────────────────────�
 | ml        | 3002            | No — internal only |
 | scheduler | —               | No                 |
 | db        | 5432            | No (dev: yes)      |
+
+> **Note (v1.1.0):** The frontend no longer uses Next.js API proxy rewrites.
+> The browser calls the API directly via `NEXT_PUBLIC_API_URL`, so that variable
+> must be set to a publicly reachable URL in both dev and production.
 
 ---
 
@@ -84,6 +97,8 @@ openssl rand -hex 32   # for ML_SECRET
 
 Set `LIBRARY_LAT` / `LIBRARY_LON` to your library's GPS coordinates.
 Set `CORS_ORIGIN` to your production dashboard URL.
+Set `NEXT_PUBLIC_API_URL` to the public-facing API URL (e.g. `https://your-domain.com`),
+as the browser calls the API directly — no Next.js proxy involved.
 
 ### 3. Place TLS certificates
 
@@ -186,6 +201,9 @@ CORS_ORIGIN=http://localhost:3000
 DATABASE_URL=postgresql://library_app:change_me@localhost:5432/library_occupancy
 ```
 
+> `NEXT_PUBLIC_API_URL` is required — the browser calls the API directly at this
+> address. The Next.js dev server does **not** proxy `/api/*` requests.
+
 ### 2. Start all services
 
 ```bash
@@ -244,7 +262,7 @@ curl -X POST http://localhost:3002/retrain \
 | `ML_SECRET`           | Yes      | Internal secret for API↔ML communication |
 | `ML_SERVICE_URL`      | No       | Defaults to `http://ml:3002` |
 | `CORS_ORIGIN`         | Yes      | Allowed origin for dashboard CORS |
-| `NEXT_PUBLIC_API_URL` | Yes      | Public API base URL (browser-visible) |
+| `NEXT_PUBLIC_API_URL` | Yes      | Public API base URL — browser calls this directly (e.g. `https://your-domain.com` in prod, `http://localhost:3001` in dev) |
 | `COUNTRY_CODE`        | No       | ISO 3166-1 alpha-2 for holidays (default: `DE`) |
 | `LIBRARY_LAT`         | Yes      | Library latitude for weather |
 | `LIBRARY_LON`         | Yes      | Library longitude for weather |
