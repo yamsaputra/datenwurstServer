@@ -40,7 +40,7 @@ services:
       - ./frontend/public:/app/public:ro
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      WATCHPACK_POLLING: "true"
     command: npm run dev
     ports:
       - "3000:3000"

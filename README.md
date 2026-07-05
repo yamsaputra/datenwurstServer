@@ -7,10 +7,24 @@ admin dashboard and a public embeddable widget.
 
 ---
 
+## Tech Stack & Libraries
+
+| Service       | Language/Runtime | Key Libraries |
+|---------------|-------------------|----------------|
+| `frontend`    | Next.js 14 / React 18 (TypeScript) | `next`, `react`, `react-dom`, `recharts`, `lucide-react`, `clsx`, `tailwind-merge`, `tailwindcss` |
+| `api`         | Node.js (ESM) | `express`, `express-rate-limit`, `jsonwebtoken`, `bcrypt`, `cookie-parser`, `cors`, `pg`, `node-fetch` |
+| `ml`          | Node.js (ESM) | `@tensorflow/tfjs-node`, `express`, `pg` |
+| `scheduler`   | Node.js (ESM) | `node-cron`, `node-fetch`, `pg` |
+| `db`          | PostgreSQL 16 | — |
+| `nginx`       | nginx | TLS termination, reverse proxy |
+
+---
+
 ## Version History
 
 | Version | Date       | Changes |
 |---------|------------|---------|
+| v1.2.0  | 2026-07-05 | Fixed `.devcontainer/devcontainer.json`, which was an empty stub causing VS Code's "Reopen in Container" to fail with a "config not found" error — now attaches to the `frontend` service via the existing `docker-compose.yml`/`docker-compose.override.yml` stack. Removed the empty, unused `.devcontainer/Dockerfile` and `.devcontainer/app/app.py` placeholder files. Enabled reliable frontend hot-reload in the dev container by adding `WATCHPACK_POLLING: "true"` to the `frontend` service in `docker-compose.override.yml`. Removed the redundant hardcoded `NEXT_PUBLIC_API_URL` override from dev compose — value now comes solely from `.env`. Fixed an ML training bug where the Huber loss was passed as the string `'huberLoss'` instead of the `tf.losses.huberLoss` function reference in `buildModel.js`. Added the "Tech Stack & Libraries" table to this README. |
 | v1.1.0  | 2026-06-25 | Removed Next.js API proxy rewrites — browser now calls the API directly via `NEXT_PUBLIC_API_URL`. Centralized API base URL via exported `API_BASE` in `api.ts`. Updated `login` and `dashboard/layout` to use `API_BASE`. Converted `postcss.config.js` from ESM to CommonJS. Added `env.d.ts` for TypeScript environment variable declarations. |
 | v1.0.0  | 2026-06-25 | Initial release: Docker Compose stack with Next.js frontend, Node.js API, TF.js ML service, PostgreSQL, nginx, and scheduler. |
 

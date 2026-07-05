@@ -27,7 +27,7 @@ export function buildModel() {
 
   model.compile({
     optimizer: tf.train.adam(0.001),
-    loss: 'huberLoss',
+    loss: tf.losses.huberLoss,
     metrics: ['mae'],
   });
 

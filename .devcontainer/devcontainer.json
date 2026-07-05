@@ -1,0 +1,10 @@
+{
+  "name": "datenwurst",
+  "dockerComposeFile": [
+    "../docker-compose.yml",
+    "../docker-compose.override.yml"
+  ],
+  "service": "frontend",
+  "workspaceFolder": "/app",
+  "shutdownAction": "stopCompose"
+}
