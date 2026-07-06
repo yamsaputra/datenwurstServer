@@ -22,7 +22,8 @@ interface WidgetData {
 interface HourSlot {
   hour: number;
   occ: number;
-  pct: number;
+  pct: number;    // share of capacity — drives color and labels
+  barPct: number; // share of the week's busiest hour — drives bar height
 }
 
 interface DayForecast {
@@ -65,6 +66,7 @@ function buildDays(points: ForecastPoint[], maxOcc: number): DayForecast[] {
         hour,
         occ: Math.round(occ),
         pct: Math.min(100, Math.round((occ / maxOcc) * 100)),
+        barPct: 0,
       }));
 
     // Trim closed early-morning / late-night hours, keep the interesting span
@@ -87,6 +89,15 @@ function buildDays(points: ForecastPoint[], maxOcc: number): DayForecast[] {
       peakHour: peakSlot?.hour ?? null,
       peakPct: peakSlot ? Math.min(100, Math.round((peakSlot.occ / maxOcc) * 100)) : 0,
     });
+  }
+
+  // Bars scale to the busiest hour across the shown days — occupancy is often
+  // far below capacity, and capacity-relative bars collapse into flat lines.
+  const weekMax = Math.max(1, ...days.flatMap(d => d.hours.map(s => s.occ)));
+  for (const day of days) {
+    for (const slot of day.hours) {
+      slot.barPct = Math.min(100, Math.round((slot.occ / weekMax) * 100));
+    }
   }
   return days;
 }
@@ -247,7 +258,7 @@ export default function WidgetPage() {
                       <div
                         className="w-full rounded-t transition-all"
                         style={{
-                          height: `${Math.max(4, slot.pct)}%`,
+                          height: `${Math.max(3, slot.barPct)}%`,
                           background: occupancyColor(slot.pct),
                           opacity: 0.9,
                         }}
