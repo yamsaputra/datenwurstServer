@@ -4,6 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { get, put } from '@/lib/api';
 import ModelStatusCard from '@/components/ModelStatusCard';
 import RetrainButton from '@/components/RetrainButton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 interface MLStatus {
   is_training: boolean;
@@ -16,11 +20,10 @@ interface MLStatus {
 interface Config { [key: string]: unknown; }
 
 export default function MLPage() {
-  const [status, setStatus]       = useState<MLStatus | null>(null);
-  const [config, setConfig]       = useState<Config>({});
-  const [maxOcc, setMaxOcc]       = useState('');
-  const [saving, setSaving]       = useState(false);
-  const [saveMsg, setSaveMsg]     = useState('');
+  const [status, setStatus] = useState<MLStatus | null>(null);
+  const [maxOcc, setMaxOcc] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -29,7 +32,6 @@ export default function MLPage() {
         get<Config>('/dashboard/config'),
       ]);
       setStatus(s);
-      setConfig(c);
       setMaxOcc(String(c.max_occupancy ?? ''));
     } catch (e) {
       console.error(e);
@@ -58,65 +60,78 @@ export default function MLPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-text-primary">KI-Modell</h1>
+    <div className="space-y-8">
+      <section>
+        <Badge>KI-Modell</Badge>
+        <h1 className="mt-4 text-4xl font-normal leading-tight tracking-[-0.02em] text-foreground">
+          Training und Konfiguration
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Status des aktiven Prognosemodells, manuelles Retraining und Kapazitätsparameter.
+        </p>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Model status */}
-        <div className="bg-bg-surface border border-border rounded-md p-6">
-          <h2 className="text-sm font-medium text-text-muted mb-4">Modellstatus</h2>
-          {status ? (
-            <ModelStatusCard
-              isTraining={status.is_training}
-              activeVersion={status.active_version}
-              versions={status.versions}
-            />
-          ) : (
-            <div className="space-y-2">
-              {[1,2,3].map(i => <div key={i} className="h-8 bg-bg-raised rounded-md animate-pulse"/>)}
-            </div>
-          )}
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Modellstatus</CardTitle>
+            <CardDescription>Aktive Version und Qualität der letzten Trainingsläufe</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {status ? (
+              <ModelStatusCard
+                isTraining={status.is_training}
+                activeVersion={status.active_version}
+                versions={status.versions}
+              />
+            ) : (
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => <div key={i} className="h-8 animate-pulse rounded-md bg-muted" />)}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Retrain */}
-        <div className="bg-bg-surface border border-border rounded-md p-6">
-          <h2 className="text-sm font-medium text-text-muted mb-4">Manuelles Training</h2>
-          <p className="text-xs text-text-muted mb-5">
-            Trainiert das Modell neu mit den letzten 12 Monaten Daten.
-            Kann einige Minuten dauern.
-          </p>
-          <RetrainButton onComplete={fetchStatus} />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Manuelles Training</CardTitle>
+            <CardDescription>
+              Trainiert das Modell neu mit den letzten 12 Monaten Daten. Kann einige Minuten dauern.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RetrainButton onComplete={fetchStatus} />
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Config */}
-      <div className="bg-bg-surface border border-border rounded-md p-6">
-        <h2 className="text-sm font-medium text-text-muted mb-4">Konfiguration</h2>
-        <div className="max-w-xs space-y-4">
-          <div>
-            <label className="block text-xs text-text-muted mb-1.5">Maximale Auslastung</label>
+      <Card>
+        <CardHeader>
+          <CardTitle>Konfiguration</CardTitle>
+          <CardDescription>Kapazität, gegen die Auslastung und Prognosen normalisiert werden.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-sm space-y-3">
+            <label className="block text-sm font-medium text-foreground" htmlFor="max-occupancy">
+              Maximale Auslastung
+            </label>
             <div className="flex gap-2">
-              <input
+              <Input
+                id="max-occupancy"
                 type="number"
-                min="1" max="9999"
+                min="1"
+                max="9999"
                 value={maxOcc}
                 onChange={e => setMaxOcc(e.target.value)}
-                className="flex-1 bg-bg-raised border border-border rounded-sm px-3 py-2
-                           text-text-primary text-sm focus:outline-none focus:border-accent"
               />
-              <button
-                onClick={saveMaxOcc}
-                disabled={saving}
-                className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white
-                           text-sm px-4 rounded-sm transition-colors min-h-[44px]"
-              >
-                {saving ? '…' : 'Speichern'}
-              </button>
+              <Button onClick={saveMaxOcc} disabled={saving}>
+                {saving ? '...' : 'Speichern'}
+              </Button>
             </div>
-            {saveMsg && <p className="text-xs text-text-muted mt-1">{saveMsg}</p>}
+            {saveMsg && <p className="text-xs text-muted-foreground">{saveMsg}</p>}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

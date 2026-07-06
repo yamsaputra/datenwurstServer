@@ -14,7 +14,7 @@ export function formatDate(iso: string) {
 }
 
 export function occupancyColor(percent: number): string {
-  if (percent >= 85) return '#e8394a';
-  if (percent >= 60) return '#f5a623';
-  return '#22c97a';
+  if (percent >= 85) return '#cf2d56';
+  if (percent >= 60) return '#c08532';
+  return '#1f8a65';
 }

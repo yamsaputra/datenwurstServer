@@ -2,13 +2,17 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { LibraryBig } from 'lucide-react';
 import { API_BASE } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(e: FormEvent) {
@@ -24,92 +28,75 @@ export default function LoginPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Login failed');
+        setError(data.error || 'Login fehlgeschlagen');
       } else {
         router.push('/dashboard');
       }
     } catch {
-      setError('Network error. Please try again.');
+      setError('Netzwerkfehler. Bitte erneut versuchen.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="min-h-screen bg-bg-base flex items-center justify-center p-6">
+    <div className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
       <div className="w-full max-w-sm">
-        {/* Logo placeholder */}
-        <div className="flex justify-center mb-8">
-          <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-            </svg>
+        <div className="mb-8 flex justify-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <LibraryBig size={24} />
           </div>
         </div>
 
-        <h1 className="text-2xl font-semibold text-text-primary text-center mb-1">
-          Bibliothek
-        </h1>
-        <p className="text-text-muted text-center text-sm mb-8">
-          Auslastungsübersicht
-        </p>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-normal tracking-[-0.01em]">Bibliothek</CardTitle>
+            <CardDescription>Auslastungsübersicht</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="username">
+                  Benutzername
+                </label>
+                <Input
+                  id="username"
+                  type="text"
+                  autoComplete="username"
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                  placeholder="admin"
+                />
+              </div>
 
-        <div className="bg-bg-surface border border-border rounded-xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label className="block text-sm text-text-muted mb-1.5" htmlFor="username">
-                Benutzername
-              </label>
-              <input
-                id="username"
-                type="text"
-                autoComplete="username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                required
-                className="w-full bg-bg-raised border border-border rounded-sm px-3 py-2.5
-                           text-text-primary text-sm placeholder:text-text-muted
-                           focus:outline-none focus:border-accent transition-colors"
-                placeholder="admin"
-              />
-            </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="password">
+                  Passwort
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  placeholder="••••••••"
+                />
+              </div>
 
-            <div>
-              <label className="block text-sm text-text-muted mb-1.5" htmlFor="password">
-                Passwort
-              </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-                className="w-full bg-bg-raised border border-border rounded-sm px-3 py-2.5
-                           text-text-primary text-sm placeholder:text-text-muted
-                           focus:outline-none focus:border-accent transition-colors"
-                placeholder="••••••••"
-              />
-            </div>
+              {error && (
+                <p className="rounded-md border border-danger/20 bg-danger/10 px-3 py-2 text-sm text-danger">
+                  {error}
+                </p>
+              )}
 
-            {error && (
-              <p className="text-danger text-sm bg-danger/10 border border-danger/20 rounded-md px-3 py-2">
-                {error}
-              </p>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-accent hover:bg-accent-dim disabled:opacity-50
-                         text-white font-medium rounded-sm py-2.5 text-sm
-                         transition-colors min-h-[44px]"
-            >
-              {loading ? 'Anmelden…' : 'Anmelden'}
-            </button>
-          </form>
-        </div>
+              <Button type="submit" disabled={loading} className="w-full">
+                {loading ? 'Anmelden...' : 'Anmelden'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

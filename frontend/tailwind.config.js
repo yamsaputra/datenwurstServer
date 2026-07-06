@@ -4,36 +4,65 @@ const config = {
   theme: {
     extend: {
       colors: {
-        bg: {
-          base:    '#080e1a',
-          surface: '#0d1629',
-          raised:  '#142038',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        card: {
+          DEFAULT: 'hsl(var(--card))',
+          foreground: 'hsl(var(--card-foreground))',
         },
-        border: '#1e3054',
+        popover: {
+          DEFAULT: 'hsl(var(--popover))',
+          foreground: 'hsl(var(--popover-foreground))',
+        },
+        primary: {
+          DEFAULT: 'hsl(var(--primary))',
+          foreground: 'hsl(var(--primary-foreground))',
+        },
+        secondary: {
+          DEFAULT: 'hsl(var(--secondary))',
+          foreground: 'hsl(var(--secondary-foreground))',
+        },
+        muted: {
+          DEFAULT: 'hsl(var(--muted))',
+          foreground: 'hsl(var(--muted-foreground))',
+        },
+        destructive: {
+          DEFAULT: 'hsl(var(--destructive))',
+          foreground: 'hsl(var(--destructive-foreground))',
+        },
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        bg: {
+          base:    '#f7f7f4',
+          surface: '#ffffff',
+          raised:  '#fafaf7',
+        },
+        border: '#e6e5e0',
         accent: {
-          DEFAULT: '#2f6fef',
-          dim:     '#1a4db3',
-          glow:    '#4d8fff',
+          DEFAULT: '#f54e00',
+          dim:     '#d04200',
+          glow:    '#f54e00',
         },
         text: {
-          primary: '#e8edf5',
-          muted:   '#7a93b8',
+          primary: '#26251e',
+          muted:   '#5a5852',
         },
-        success: '#22c97a',
-        warning: '#f5a623',
-        danger:  '#e8394a',
+        success: '#1f8a65',
+        warning: '#c08532',
+        danger:  '#cf2d56',
       },
       borderRadius: {
         xs:   '4px',
         sm:   '6px',
-        DEFAULT: '10px',
-        md:   '10px',
-        lg:   '16px',
-        xl:   '26px',
+        DEFAULT: '8px',
+        md:   '8px',
+        lg:   '12px',
+        xl:   '16px',
         full: '9999px',
       },
       fontFamily: {
-        sans: ['system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
     },
   },
