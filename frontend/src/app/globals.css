@@ -3,21 +3,39 @@
 @tailwind utilities;
 
 :root {
-  --color-bg-base:    #080e1a;
-  --color-bg-surface: #0d1629;
-  --color-bg-raised:  #142038;
-  --color-border:     #1e3054;
-  --color-accent:     #2f6fef;
-  --color-accent-dim: #1a4db3;
-  --color-accent-glow:#4d8fff;
-  --color-text-primary: #e8edf5;
-  --color-text-muted:   #7a93b8;
+  --background: 60 16% 96%;
+  --foreground: 48 12% 13%;
+  --card: 0 0% 100%;
+  --card-foreground: 48 12% 13%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 48 12% 13%;
+  --primary: 19 100% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 60 10% 91%;
+  --secondary-foreground: 48 12% 13%;
+  --muted: 60 14% 93%;
+  --muted-foreground: 45 5% 34%;
+  --destructive: 345 64% 49%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 60 10% 89%;
+  --input: 60 10% 89%;
+  --ring: 19 100% 48%;
+
+  --color-bg-base:    #f7f7f4;
+  --color-bg-surface: #ffffff;
+  --color-bg-raised:  #fafaf7;
+  --color-border:     #e6e5e0;
+  --color-accent:     #f54e00;
+  --color-accent-dim: #d04200;
+  --color-accent-glow:#f54e00;
+  --color-text-primary: #26251e;
+  --color-text-muted:   #5a5852;
 }
 
 html, body {
   background-color: var(--color-bg-base);
   color: var(--color-text-primary);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   min-height: 100vh;
 }
@@ -26,5 +44,9 @@ html, body {
 
 /* Scrollbar styling */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--color-bg-surface); }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+::-webkit-scrollbar-track { background: var(--color-bg-base); }
+::-webkit-scrollbar-thumb { background: #cfcdc4; border-radius: 4px; }
+
+::selection {
+  background: rgba(245, 78, 0, 0.18);
+}

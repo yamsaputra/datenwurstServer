@@ -14,7 +14,19 @@ export function formatDate(iso: string) {
 }
 
 export function occupancyColor(percent: number): string {
-  if (percent >= 85) return '#e8394a';
-  if (percent >= 60) return '#f5a623';
-  return '#22c97a';
+  if (percent >= 85) return '#cf2d56';
+  if (percent >= 60) return '#c08532';
+  return '#1f8a65';
+}
+
+export function occupancyStatus(percent: number) {
+  if (percent >= 85) return { label: 'Sehr voll', variant: 'destructive' as const };
+  if (percent >= 60) return { label: 'Gut besucht', variant: 'warning' as const };
+  return { label: 'Ruhig', variant: 'success' as const };
+}
+
+// Day key in the viewer's timezone — slicing the ISO string would bucket
+// late-evening intervals into the wrong (UTC) day.
+export function localDayKey(iso: string | Date) {
+  return new Date(iso).toLocaleDateString('en-CA');
 }

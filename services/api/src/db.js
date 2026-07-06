@@ -3,7 +3,7 @@ import pg from 'pg';
 // pg returns NUMERIC/DECIMAL columns (e.g. predicted_occ, weather_temp) as
 // strings by default to avoid float precision loss; parse them as numbers
 // since this app has no need for arbitrary-precision decimals.
-pg.types.setTypeParser(1700, (value) => (value === null ? null : parseFloat(value)));
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value) => (value === null ? null : parseFloat(value)));
 
 const { Pool } = pg;
 

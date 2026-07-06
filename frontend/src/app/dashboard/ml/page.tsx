@@ -2,37 +2,43 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { get, put } from '@/lib/api';
-import ModelStatusCard from '@/components/ModelStatusCard';
+import ModelStatusCard, { type ForecastMeta, type ModelVersion } from '@/components/ModelStatusCard';
+import ModelVersionsTable from '@/components/ModelVersionsTable';
 import RetrainButton from '@/components/RetrainButton';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 
 interface MLStatus {
   is_training: boolean;
   active_version: number | null;
-  versions: {
-    id: number; created_at: string; train_from: string; train_to: string;
-    epochs: number; loss_final: number; mae_final: number; is_active: boolean;
-  }[];
+  versions: ModelVersion[];
 }
 interface Config { [key: string]: unknown; }
 
 export default function MLPage() {
-  const [status, setStatus]       = useState<MLStatus | null>(null);
-  const [config, setConfig]       = useState<Config>({});
-  const [maxOcc, setMaxOcc]       = useState('');
-  const [saving, setSaving]       = useState(false);
-  const [saveMsg, setSaveMsg]     = useState('');
+  const [status, setStatus] = useState<MLStatus | null>(null);
+  const [statusError, setStatusError] = useState('');
+  const [meta, setMeta] = useState<ForecastMeta | null>(null);
+  const [maxOcc, setMaxOcc] = useState('');
+  const [widgetTitle, setWidgetTitle] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState('');
+  const [saveFailed, setSaveFailed] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
-      const [s, c] = await Promise.all([
-        get<MLStatus>('/ml/status'),
-        get<Config>('/dashboard/config'),
-      ]);
-      setStatus(s);
-      setConfig(c);
-      setMaxOcc(String(c.max_occupancy ?? ''));
+      setStatus(await get<MLStatus>('/ml/status'));
+      setStatusError('');
     } catch (e) {
-      console.error(e);
+      setStatusError(e instanceof Error ? e.message : 'Fehler beim Laden des Modellstatus.');
+    }
+    // Coverage info is secondary — the status card renders without it
+    try {
+      setMeta(await get<ForecastMeta>('/dashboard/forecasts/meta'));
+    } catch {
+      setMeta(null);
     }
   }, []);
 
@@ -42,81 +48,162 @@ export default function MLPage() {
     return () => clearInterval(id);
   }, [fetchStatus]);
 
-  async function saveMaxOcc() {
+  // Config is loaded once — polling it would overwrite the inputs while typing
+  useEffect(() => {
+    get<Config>('/dashboard/config')
+      .then(c => {
+        setMaxOcc(String(c.max_occupancy ?? ''));
+        setWidgetTitle(String(c.widget_title ?? ''));
+      })
+      .catch(e => console.error(e));
+  }, []);
+
+  async function saveConfig() {
     const v = parseInt(maxOcc);
-    if (!v || v < 1) return;
+    if (!v || v < 1) {
+      setSaveFailed(true);
+      setSaveMsg('Die maximale Kapazität muss eine Zahl größer 0 sein.');
+      return;
+    }
     setSaving(true);
     setSaveMsg('');
+    setSaveFailed(false);
     try {
       await put('/dashboard/config', { key: 'max_occupancy', value: v });
-      setSaveMsg('Gespeichert.');
+      if (widgetTitle.trim()) {
+        await put('/dashboard/config', { key: 'widget_title', value: widgetTitle.trim() });
+      }
+      setSaveMsg('Einstellungen gespeichert.');
     } catch {
-      setSaveMsg('Fehler beim Speichern.');
+      setSaveFailed(true);
+      setSaveMsg('Speichern fehlgeschlagen. Bitte erneut versuchen.');
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-semibold text-text-primary">KI-Modell</h1>
+    <div className="space-y-8">
+      <section>
+        <Badge>KI-Modell</Badge>
+        <h1 className="mt-4 text-4xl font-normal leading-tight tracking-[-0.02em] text-foreground">
+          Modell &amp; Training
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Das Prognosemodell lernt aus den historischen Besucherdaten und sagt die Belegung in
+          30-Minuten-Intervallen für die kommende Woche voraus. Hier sehen Sie Qualität und Historie der
+          Trainingsläufe und starten bei Bedarf ein neues Training.
+        </p>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Model status */}
-        <div className="bg-bg-surface border border-border rounded-md p-6">
-          <h2 className="text-sm font-medium text-text-muted mb-4">Modellstatus</h2>
-          {status ? (
-            <ModelStatusCard
-              isTraining={status.is_training}
-              activeVersion={status.active_version}
-              versions={status.versions}
-            />
-          ) : (
-            <div className="space-y-2">
-              {[1,2,3].map(i => <div key={i} className="h-8 bg-bg-raised rounded-md animate-pulse"/>)}
-            </div>
-          )}
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Modellstatus</CardTitle>
+            <CardDescription>Kennzahlen des aktiven Modells und aktueller Prognosestand</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {status ? (
+              <ModelStatusCard
+                isTraining={status.is_training}
+                activeVersion={status.active_version}
+                versions={status.versions}
+                meta={meta}
+              />
+            ) : statusError ? (
+              <p className="rounded-md border border-danger/20 bg-danger/10 p-4 text-sm text-danger">
+                {statusError}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {[1, 2, 3].map(i => <div key={i} className="h-8 animate-pulse rounded-md bg-muted" />)}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-        {/* Retrain */}
-        <div className="bg-bg-surface border border-border rounded-md p-6">
-          <h2 className="text-sm font-medium text-text-muted mb-4">Manuelles Training</h2>
-          <p className="text-xs text-text-muted mb-5">
-            Trainiert das Modell neu mit den letzten 12 Monaten Daten.
-            Kann einige Minuten dauern.
-          </p>
-          <RetrainButton onComplete={fetchStatus} />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Neues Training</CardTitle>
+            <CardDescription>
+              Trainiert das Modell neu und aktiviert es anschließend automatisch. Dauert je nach
+              Datenmenge einige Minuten — die Seite kann dabei geöffnet bleiben.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RetrainButton isTraining={status?.is_training ?? false} onComplete={fetchStatus} />
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Config */}
-      <div className="bg-bg-surface border border-border rounded-md p-6">
-        <h2 className="text-sm font-medium text-text-muted mb-4">Konfiguration</h2>
-        <div className="max-w-xs space-y-4">
-          <div>
-            <label className="block text-xs text-text-muted mb-1.5">Maximale Auslastung</label>
-            <div className="flex gap-2">
-              <input
+      <Card>
+        <CardHeader>
+          <CardTitle>Trainingshistorie</CardTitle>
+          <CardDescription>
+            Die letzten Trainingsläufe im Vergleich — ein niedrigerer MAE bedeutet genauere Prognosen.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {status ? (
+            <ModelVersionsTable versions={status.versions} />
+          ) : (
+            <div className="h-32 animate-pulse rounded-md bg-muted" />
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Einstellungen</CardTitle>
+          <CardDescription>Kapazität und Beschriftung für Dashboard, Prognose und Widget.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="max-w-md space-y-5">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="max-occupancy">
+                Maximale Kapazität
+              </label>
+              <Input
+                id="max-occupancy"
                 type="number"
-                min="1" max="9999"
+                min="1"
+                max="9999"
                 value={maxOcc}
                 onChange={e => setMaxOcc(e.target.value)}
-                className="flex-1 bg-bg-raised border border-border rounded-sm px-3 py-2
-                           text-text-primary text-sm focus:outline-none focus:border-accent"
               />
-              <button
-                onClick={saveMaxOcc}
-                disabled={saving}
-                className="bg-accent hover:bg-accent-dim disabled:opacity-50 text-white
-                           text-sm px-4 rounded-sm transition-colors min-h-[44px]"
-              >
-                {saving ? '…' : 'Speichern'}
-              </button>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Anzahl Plätze — Bezugsgröße für Prozentwerte und Statusfarben.
+              </p>
             </div>
-            {saveMsg && <p className="text-xs text-text-muted mt-1">{saveMsg}</p>}
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-foreground" htmlFor="widget-title">
+                Widget-Titel
+              </label>
+              <Input
+                id="widget-title"
+                type="text"
+                maxLength={60}
+                value={widgetTitle}
+                onChange={e => setWidgetTitle(e.target.value)}
+                placeholder="Bibliothek Auslastung"
+              />
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                Überschrift im öffentlichen Widget, z. B. der Name Ihrer Bibliothek.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button onClick={saveConfig} disabled={saving}>
+                {saving ? 'Speichert…' : 'Speichern'}
+              </Button>
+              {saveMsg && (
+                <p className={`text-sm ${saveFailed ? 'text-danger' : 'text-success'}`}>{saveMsg}</p>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

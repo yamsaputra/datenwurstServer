@@ -20,7 +20,10 @@ export async function trainAndSave(from, to) {
 
     console.log(`[ml] Loading training data ${fromDate.toISOString()} → ${toDate.toISOString()}`);
     const data = await loadTrainingData(fromDate, toDate);
-    if (!data) throw Object.assign(new Error('Not enough data to train (need at least 24 rows)'), { status: 400 });
+    if (!data) throw Object.assign(
+      new Error('Not enough data to train (need at least 24 half-hour intervals)'),
+      { status: 400 }
+    );
 
     const { X, y, stats } = data;
     console.log(`[ml] Training on ${X.length} windows`);

@@ -15,13 +15,16 @@ app.set('trust proxy', 1);
 app.use(express.json({ limit: '64kb' }));
 app.use(cookieParser());
 
-const corsOrigin = process.env.CORS_ORIGIN;
-app.use('/api/v1/public', cors({ origin: '*', methods: ['GET', 'OPTIONS'] }));
-app.use(cors({
-  origin: corsOrigin,
+// Dispatch per path — stacking both would let the app CORS headers
+// overwrite the public wildcard ones.
+const publicCors = cors({ origin: '*', methods: ['GET', 'OPTIONS'] });
+const appCors = cors({
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-}));
+});
+app.use((req, res, next) =>
+  (req.path.startsWith('/api/v1/public') ? publicCors : appCors)(req, res, next));
 
 app.use(defaultLimiter);
 

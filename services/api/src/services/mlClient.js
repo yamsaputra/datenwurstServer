@@ -15,7 +15,9 @@ async function mlFetch(path, options = {}) {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw Object.assign(new Error(text || res.statusText), { status: res.status });
+    let message = text || res.statusText;
+    try { message = JSON.parse(text).error ?? message; } catch {}
+    throw Object.assign(new Error(message), { status: res.status });
   }
   return res.json();
 }
