@@ -31,3 +31,23 @@ export async function loadTrainingData(from, to) {
 
   return { X, y, stats, rowCount: rows.length };
 }
+
+// Latest intervals with lag features, oldest-first — the prediction seed window.
+export async function loadRecentHistory(limit = 16) {
+  const { rows } = await pool.query(`
+    SELECT * FROM (
+      SELECT
+        oi.interval_start, oi.day_of_week, oi.occupancy, oi.is_open,
+        oi.is_holiday, oi.is_semester, oi.weather_temp, oi.weather_precip, oi.weather_code,
+        LAG(oi.occupancy, 1)   OVER (ORDER BY oi.interval_start) AS lag1,
+        LAG(oi.occupancy, 2)   OVER (ORDER BY oi.interval_start) AS lag2,
+        LAG(oi.occupancy, 48)  OVER (ORDER BY oi.interval_start) AS lag48,
+        LAG(oi.occupancy, 336) OVER (ORDER BY oi.interval_start) AS lag336
+      FROM occupancy_intervals oi
+      ORDER BY oi.interval_start DESC
+      LIMIT $1
+    ) recent
+    ORDER BY interval_start
+  `, [limit]);
+  return rows;
+}

@@ -25,4 +25,8 @@ async function mlFetch(path, options = {}) {
 export const triggerRetrain = (from, to) =>
   mlFetch('/retrain', { method: 'POST', body: JSON.stringify({ from, to }) });
 
+// Empty body — the ML service seeds the prediction from its own DB history
+export const triggerForecast = () =>
+  mlFetch('/predict', { method: 'POST', body: JSON.stringify({}) });
+
 export const getStatus = () => mlFetch('/status');
