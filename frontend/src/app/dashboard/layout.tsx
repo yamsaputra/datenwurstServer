@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 
 const navItems = [
   { href: '/dashboard', label: 'Übersicht', icon: BarChart2 },
-  { href: '/dashboard/ml', label: 'KI-Modell', icon: Brain },
+  { href: '/dashboard/ml', label: 'Modell & Training', icon: Brain },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
             <div>
               <p className="text-sm font-semibold leading-tight text-foreground">Bibliothek</p>
-              <p className="text-xs text-muted-foreground">Forecast Platform</p>
+              <p className="text-xs text-muted-foreground">Auslastung &amp; Prognose</p>
             </div>
           </div>
         </div>

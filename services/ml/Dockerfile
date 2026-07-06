@@ -9,7 +9,8 @@ COPY package.json .
 RUN npm install --omit=dev
 
 COPY src/ ./src/
-RUN mkdir -p /app/models
+# Owned by node — the service runs unprivileged and must write trained models here
+RUN mkdir -p /app/models && chown node:node /app/models
 
 USER node
 EXPOSE 3002

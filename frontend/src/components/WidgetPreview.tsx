@@ -1,12 +1,30 @@
 'use client';
 
-import { ExternalLink, MonitorSmartphone, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Check, Copy, ExternalLink, MonitorSmartphone, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function WidgetPreview() {
-  const embed = '<iframe src="/widget" width="420" height="520" loading="lazy"></iframe>';
+  const [origin, setOrigin] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  // window is unavailable during SSR — resolve the embed origin on the client
+  useEffect(() => setOrigin(window.location.origin), []);
+
+  const widgetUrl = `${origin || ''}/widget`;
+  const embed = `<iframe src="${widgetUrl}" width="420" height="640" style="border:0" loading="lazy" title="Bibliothek Auslastung"></iframe>`;
+
+  async function copyEmbed() {
+    try {
+      await navigator.clipboard.writeText(embed);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard access denied — the code stays selectable below.
+    }
+  }
 
   return (
     <Card className="overflow-hidden">
@@ -15,34 +33,35 @@ export default function WidgetPreview() {
           <div>
             <div className="mb-3 flex items-center gap-2">
               <Badge>Widget</Badge>
-              <Badge variant="outline">Live Preview</Badge>
+              <Badge variant="outline">Live-Vorschau</Badge>
             </div>
             <CardTitle className="text-[26px] font-normal leading-tight tracking-[-0.01em]">
-              Einbettbare Vorhersage
+              Einbettbares Widget
             </CardTitle>
             <CardDescription className="mt-2 max-w-2xl">
-              Vorschau des öffentlichen Iframes mit aktueller Auslastung und kompaktem 3-Tage-Ausblick.
+              Öffentliche Ansicht mit aktueller Auslastung, stündlicher Tagesprognose und 4-Tage-Ausblick —
+              ohne Anmeldung einbettbar auf jeder Website.
             </CardDescription>
           </div>
           <Button variant="secondary" className="shrink-0" onClick={() => window.open('/widget', '_blank')}>
             <ExternalLink size={16} />
-            Öffnen
+            In neuem Tab öffnen
           </Button>
         </div>
       </CardHeader>
       <CardContent className="grid gap-6 p-4 lg:grid-cols-[minmax(320px,420px)_1fr] lg:p-6">
         <div className="rounded-xl border border-border bg-[#26251e] p-2">
           <div className="mb-2 flex items-center gap-1.5 px-2 py-1">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#dfa88f]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#9fc9a2]" />
-            <span className="h-2.5 w-2.5 rounded-full bg-[#9fbbe0]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f7f7f4]/30" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f7f7f4]/30" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[#f7f7f4]/30" />
             <span className="ml-auto font-mono text-[11px] text-[#f7f7f4]/65">/widget</span>
           </div>
           <iframe
-            title="Bibliothek Widget Vorschau"
+            title="Widget-Vorschau"
             src="/widget"
             loading="lazy"
-            className="h-[520px] w-full rounded-lg border border-white/10 bg-bg-base"
+            className="h-[640px] w-full rounded-lg border border-white/10 bg-bg-base"
           />
         </div>
 
@@ -53,9 +72,10 @@ export default function WidgetPreview() {
                 <MonitorSmartphone size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Optimiert für externe Seiten</h3>
+                <h3 className="text-sm font-semibold text-foreground">Für externe Seiten gemacht</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Der Frame hat feste Vorschauhöhe, klare Kanten und vermeidet Scroll-Überraschungen im Embed.
+                  Fester Rahmen, keine Anmeldung, keine Cookies — der Inhalt aktualisiert sich alle fünf
+                  Minuten von selbst.
                 </p>
               </div>
             </div>
@@ -64,18 +84,25 @@ export default function WidgetPreview() {
                 <Sparkles size={18} />
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-foreground">Cursor-inspirierte Oberfläche</h3>
+                <h3 className="text-sm font-semibold text-foreground">Prognose zum Anklicken</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Warmes Canvas, Hairline-Border und sparsames Orange halten die Prognose ruhig lesbar.
+                  Besucherinnen und Besucher sehen die stündliche Prognose für morgen und können per Klick
+                  durch die nächsten vier Tage blättern.
                 </p>
               </div>
             </div>
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-              Embed-Code
-            </p>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Embed-Code
+              </p>
+              <Button variant="ghost" size="sm" onClick={copyEmbed}>
+                {copied ? <Check size={14} className="text-success" /> : <Copy size={14} />}
+                {copied ? 'Kopiert' : 'Kopieren'}
+              </Button>
+            </div>
             <pre className="overflow-x-auto rounded-lg border border-border bg-card p-4 font-mono text-xs text-foreground">
               <code>{embed}</code>
             </pre>

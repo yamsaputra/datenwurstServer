@@ -44,6 +44,20 @@ router.get('/forecasts/week', async (req, res, next) => {
   catch (err) { next(err); }
 });
 
+router.get('/forecasts/meta', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT COUNT(*)::int          AS upcoming_intervals,
+             MAX(f.target_interval) AS horizon,
+             MAX(f.generated_at)    AS generated_at
+      FROM forecasts f
+      INNER JOIN model_versions mv ON mv.id = f.model_version AND mv.is_active = TRUE
+      WHERE f.target_interval >= NOW()
+    `);
+    res.json(rows[0]);
+  } catch (err) { next(err); }
+});
+
 router.get('/config', async (req, res, next) => {
   try { res.json(await getConfig()); }
   catch (err) { next(err); }

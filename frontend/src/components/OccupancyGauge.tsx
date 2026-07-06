@@ -1,6 +1,6 @@
 'use client';
 
-import { occupancyColor } from '@/lib/utils';
+import { occupancyColor, occupancyStatus } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
 interface Props {
@@ -19,8 +19,7 @@ export default function OccupancyGauge({ occupancy, maxOccupancy, percent }: Pro
   const arc = circ * 0.75;
   const offset = arc - (percent / 100) * arc;
 
-  const statusLabel = percent >= 85 ? 'Sehr voll' : percent >= 60 ? 'Gut besucht' : 'Ruhig';
-  const variant = percent >= 85 ? 'destructive' : percent >= 60 ? 'warning' : 'success';
+  const status = occupancyStatus(percent);
 
   return (
     <div className="flex flex-col items-center gap-4">
@@ -58,7 +57,7 @@ export default function OccupancyGauge({ occupancy, maxOccupancy, percent }: Pro
         </text>
       </svg>
 
-      <Badge variant={variant}>{statusLabel}</Badge>
+      <Badge variant={status.variant}>{status.label}</Badge>
     </div>
   );
 }

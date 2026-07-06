@@ -51,7 +51,7 @@ export default function LoginPage() {
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-normal tracking-[-0.01em]">Bibliothek</CardTitle>
-            <CardDescription>Auslastungsübersicht</CardDescription>
+            <CardDescription>Anmeldung zur Auslastungs- und Prognoseübersicht</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -92,7 +92,7 @@ export default function LoginPage() {
               )}
 
               <Button type="submit" disabled={loading} className="w-full">
-                {loading ? 'Anmelden...' : 'Anmelden'}
+                {loading ? 'Wird angemeldet…' : 'Anmelden'}
               </Button>
             </form>
           </CardContent>

@@ -10,19 +10,16 @@ interface ForecastPoint {
 
 interface Props {
   data: ForecastPoint[];
-  title?: string;
 }
 
-export default function ForecastChart({ data, title = 'Nächste Stunden' }: Props) {
+export default function ForecastChart({ data }: Props) {
   const chartData = data.map(d => ({
     time: formatTime(d.target_interval),
     occ: Math.round(d.predicted_occ),
   }));
 
   return (
-    <div>
-      <h3 className="mb-4 text-sm font-medium text-muted-foreground">{title}</h3>
-      <ResponsiveContainer width="100%" height={180}>
+    <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={chartData} margin={{ top: 4, right: 0, left: -20, bottom: 0 }}>
           <defs>
             <linearGradient id="forecastGrad" x1="0" y1="0" x2="0" y2="1">
@@ -64,8 +61,7 @@ export default function ForecastChart({ data, title = 'Nächste Stunden' }: Prop
             dot={false}
             activeDot={{ r: 4, fill: '#f54e00', stroke: '#ffffff', strokeWidth: 2 }}
           />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+      </AreaChart>
+    </ResponsiveContainer>
   );
 }
