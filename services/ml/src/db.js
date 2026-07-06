@@ -1,9 +1,11 @@
 import pg from 'pg';
 
-const { Pool } = pg;
+// pg returns NUMERIC/DECIMAL columns (e.g. loss_final, mae_final) as strings by
+// default to avoid float precision loss; parse them as numbers since this app
+// has no need for arbitrary-precision decimals.
+pg.types.setTypeParser(pg.types.builtins.NUMERIC, (value) => (value === null ? null : parseFloat(value)));
 
-// pg returns NUMERIC as string to preserve precision; our values fit in float64
-pg.types.setTypeParser(pg.types.builtins.NUMERIC, (v) => (v === null ? null : parseFloat(v)));
+const { Pool } = pg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

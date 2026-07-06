@@ -11,7 +11,7 @@ async function mlFetch(path, options = {}) {
       'X-ML-Secret': ML_SECRET,
       ...(options.headers || {}),
     },
-    timeout: 30 * 60 * 1000,
+    signal: AbortSignal.timeout(30 * 60 * 1000),
   });
   if (!res.ok) {
     const text = await res.text();
