@@ -9,7 +9,7 @@ COPY package.json .
 RUN npm install --omit=dev
 
 COPY src/ ./src/
-RUN mkdir -p /app/models
+RUN mkdir -p /app/models && chown -R node:node /app/models
 
 USER node
 EXPOSE 3002
