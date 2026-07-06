@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 interface RetrainResult {
   version_id: number;
   mae_final: number | null;
+  forecasts_generated?: number;
 }
 
 interface Props {
@@ -42,12 +43,13 @@ export default function RetrainButton({ isTraining = false, onStarted, onComplet
         ? { from: from || undefined, to: to || undefined }
         : {};
       const result = await post<RetrainResult>('/ml/retrain', body);
-      setMessage(
-        `Training abgeschlossen — Modell v${result.version_id} ist jetzt aktiv` +
-          (Number.isFinite(Number(result.mae_final))
-            ? ` (MAE ${Number(result.mae_final).toFixed(2)}).`
-            : '.')
-      );
+      const mae = Number.isFinite(Number(result.mae_final))
+        ? ` (MAE ${Number(result.mae_final).toFixed(2)})`
+        : '';
+      const forecasts = result.forecasts_generated
+        ? ` Die Prognose wurde direkt neu berechnet.`
+        : '';
+      setMessage(`Training abgeschlossen — Modell v${result.version_id} ist jetzt aktiv${mae}.${forecasts}`);
       onComplete?.();
     } catch (err: unknown) {
       setFailed(true);

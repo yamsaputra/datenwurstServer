@@ -24,5 +24,6 @@ cron.schedule('0 2 1 * *', monthlyRetrain, { timezone: TZ });
 
 console.log('[scheduler] All cron jobs registered (TZ: Europe/Berlin)');
 
-// Run weather fetch on startup so data is immediately available
-fetchWeather();
+// Run weather fetch and forecast generation on startup so data is
+// immediately available instead of waiting for the next hourly tick.
+fetchWeather().then(generateForecasts);

@@ -1,4 +1,5 @@
 import { httpPost } from '../lib/httpClient.js';
+import generateForecasts from './generateForecasts.js';
 
 const ML_URL    = process.env.ML_SERVICE_URL || 'http://ml:3002';
 const ML_SECRET = process.env.ML_SECRET || '';
@@ -12,6 +13,10 @@ export default async function monthlyRetrain() {
     const res  = await httpPost(`${ML_URL}/retrain`, { from, to }, { 'X-ML-Secret': ML_SECRET });
     const data = await res.json();
     console.log(`[retrain] Completed — model v${data.version_id}, MAE: ${data.mae_final}`);
+
+    // The new version invalidates the old one's forecasts — regenerate now
+    // instead of leaving a gap until the next hourly run.
+    await generateForecasts();
   } catch (err) {
     console.error('[retrain] Failed:', err.message);
   }

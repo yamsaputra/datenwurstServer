@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, CalendarDays } from 'lucide-react';
 import { occupancyColor, occupancyStatus, localDayKey } from '@/lib/utils';
-import { API_BASE } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
 
 interface ForecastPoint {
@@ -98,7 +97,9 @@ export default function WidgetPage() {
 
   async function fetchData() {
     try {
-      const res = await fetch(`${API_BASE}/public/widget`);
+      // Same-origin fetch so the widget works wherever the page is served
+      // (Tailscale funnel, nginx, or the dev server via the rewrite in next.config.js)
+      const res = await fetch('/api/v1/public/widget');
       if (res.ok) setData(await res.json());
     } catch {
       // The public widget stays silent when the host service is temporarily unavailable.

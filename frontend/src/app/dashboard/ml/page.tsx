@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { get, put } from '@/lib/api';
+import { CalendarClock } from 'lucide-react';
+import { get, post, put } from '@/lib/api';
 import ModelStatusCard, { type ForecastMeta, type ModelVersion } from '@/components/ModelStatusCard';
 import ModelVersionsTable from '@/components/ModelVersionsTable';
 import RetrainButton from '@/components/RetrainButton';
@@ -26,6 +27,9 @@ export default function MLPage() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
   const [saveFailed, setSaveFailed] = useState(false);
+  const [forecasting, setForecasting] = useState(false);
+  const [forecastMsg, setForecastMsg] = useState('');
+  const [forecastFailed, setForecastFailed] = useState(false);
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -57,6 +61,29 @@ export default function MLPage() {
       })
       .catch(e => console.error(e));
   }, []);
+
+  async function generateForecast() {
+    setForecasting(true);
+    setForecastMsg('');
+    setForecastFailed(false);
+    try {
+      const result = await post<{ count: number }>('/ml/forecast', {});
+      setForecastMsg(`${result.count} Intervalle berechnet — Dashboard und Widget sind aktuell.`);
+      fetchStatus();
+    } catch (err) {
+      setForecastFailed(true);
+      const msg = err instanceof Error ? err.message : '';
+      setForecastMsg(
+        msg.includes('No trained model')
+          ? 'Kein trainiertes Modell vorhanden — bitte zuerst ein Training starten.'
+          : msg.includes('history rows')
+            ? 'Noch nicht genügend Besucherdaten für eine Prognose vorhanden.'
+            : msg || 'Prognose konnte nicht berechnet werden.'
+      );
+    } finally {
+      setForecasting(false);
+    }
+  }
 
   async function saveConfig() {
     const v = parseInt(maxOcc);
@@ -122,18 +149,41 @@ export default function MLPage() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Neues Training</CardTitle>
-            <CardDescription>
-              Trainiert das Modell neu und aktiviert es anschließend automatisch. Dauert je nach
-              Datenmenge einige Minuten — die Seite kann dabei geöffnet bleiben.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RetrainButton isTraining={status?.is_training ?? false} onComplete={fetchStatus} />
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Neues Training</CardTitle>
+              <CardDescription>
+                Trainiert das Modell neu, aktiviert es und berechnet die Prognose direkt im Anschluss.
+                Dauert je nach Datenmenge einige Minuten — die Seite kann dabei geöffnet bleiben.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RetrainButton isTraining={status?.is_training ?? false} onComplete={fetchStatus} />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Prognose berechnen</CardTitle>
+              <CardDescription>
+                Berechnet die 7-Tage-Prognose mit dem aktiven Modell sofort neu, ohne auf den
+                stündlichen Zeitplan zu warten.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Button variant="secondary" onClick={generateForecast} disabled={forecasting}>
+                <CalendarClock size={15} className={forecasting ? 'animate-pulse' : ''} />
+                {forecasting ? 'Berechnet…' : 'Prognose jetzt berechnen'}
+              </Button>
+              {forecastMsg && (
+                <p className={`text-sm ${forecastFailed ? 'text-danger' : 'text-muted-foreground'}`}>
+                  {forecastMsg}
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       <Card>
