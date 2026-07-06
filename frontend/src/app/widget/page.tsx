@@ -105,6 +105,7 @@ function buildDays(points: ForecastPoint[], maxOcc: number): DayForecast[] {
 export default function WidgetPage() {
   const [data, setData] = useState<WidgetData | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [hoveredHour, setHoveredHour] = useState<number | null>(null);
 
   async function fetchData() {
     try {
@@ -226,7 +227,10 @@ export default function WidgetPage() {
                     <button
                       key={day.key}
                       type="button"
-                      onClick={() => setSelectedDay(day.key)}
+                      onClick={() => {
+                        setSelectedDay(day.key);
+                        setHoveredHour(null);
+                      }}
                       aria-pressed={active}
                       className={`rounded-md border px-1 py-1.5 text-center transition-colors ${
                         active
@@ -248,23 +252,44 @@ export default function WidgetPage() {
               </div>
 
               <div className="rounded-md border border-border bg-bg-raised p-3">
-                <div className="flex h-24 items-end gap-[3px]">
-                  {activeDay.hours.map(slot => (
-                    <div
-                      key={slot.hour}
-                      className="group relative flex h-full flex-1 items-end"
-                      title={`${String(slot.hour).padStart(2, '0')}:00 Uhr · ca. ${slot.occ} Personen (${slot.pct} %)`}
-                    >
+                <div className="flex h-24 items-end gap-[3px]" onMouseLeave={() => setHoveredHour(null)}>
+                  {activeDay.hours.map((slot, i) => {
+                    const isHovered = hoveredHour === slot.hour;
+                    // Keep the tooltip inside the narrow iframe at the edges
+                    const align =
+                      i < 2
+                        ? 'left-0'
+                        : i >= activeDay.hours.length - 2
+                          ? 'right-0'
+                          : 'left-1/2 -translate-x-1/2';
+                    return (
                       <div
-                        className="w-full rounded-t transition-all"
-                        style={{
-                          height: `${Math.max(3, slot.barPct)}%`,
-                          background: occupancyColor(slot.pct),
-                          opacity: 0.9,
-                        }}
-                      />
-                    </div>
-                  ))}
+                        key={slot.hour}
+                        className="relative flex h-full flex-1 cursor-pointer items-end"
+                        onMouseEnter={() => setHoveredHour(slot.hour)}
+                        onClick={() => setHoveredHour(h => (h === slot.hour ? null : slot.hour))}
+                      >
+                        {isHovered && (
+                          <div
+                            className={`pointer-events-none absolute bottom-full z-10 mb-1.5 ${align} whitespace-nowrap rounded-md border border-border bg-card px-2 py-1 text-[10px] leading-snug`}
+                          >
+                            <span className="font-semibold text-foreground">ca. {slot.occ} Personen</span>
+                            <span className="text-muted-foreground">
+                              {' '}· {String(slot.hour).padStart(2, '0')}:00 Uhr ({slot.pct} %)
+                            </span>
+                          </div>
+                        )}
+                        <div
+                          className="w-full rounded-t transition-all"
+                          style={{
+                            height: `${Math.max(3, slot.barPct)}%`,
+                            background: occupancyColor(slot.pct),
+                            opacity: hoveredHour === null ? 0.9 : isHovered ? 1 : 0.4,
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="mt-1 flex gap-[3px]">
                   {activeDay.hours.map((slot, i) => (
