@@ -1,4 +1,4 @@
-.env
+.env*
 .gitignore
 nginx/certs/
 node_modules/
