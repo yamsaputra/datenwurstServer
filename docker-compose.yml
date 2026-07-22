@@ -91,3 +91,11 @@ services:
 volumes:
   db_data:
   model_store:
+
+
+networks:
+  default:
+    name: datenwurst_net
+    ipam:
+      config:
+        - subnet: 10.250.0.0/24
