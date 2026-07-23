@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import jwtAuth from '../middleware/jwtAuth.js';
 import { triggerRetrain, triggerForecast, getStatus } from '../services/mlClient.js';
+import { nowIso } from '../lib/logger.js';
 
 const router = Router();
 router.use(jwtAuth);
@@ -15,7 +16,7 @@ router.post('/retrain', async (req, res, next) => {
     try {
       forecasts_generated = (await triggerForecast()).count ?? 0;
     } catch (err) {
-      console.warn('[ml] Post-retrain forecast generation failed:', err.message);
+      console.warn(`[ml][${nowIso()}] Post-retrain forecast generation failed:`, err.message);
     }
     res.json({ ...result, forecasts_generated });
   } catch (err) { next(err); }

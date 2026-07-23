@@ -56,12 +56,15 @@ services:
       ML_SERVICE_URL: ${ML_SERVICE_URL:-http://ml:3002}
       ML_SECRET: ${ML_SECRET}
       OPEN_METEO_URL: ${OPEN_METEO_URL:-https://api.open-meteo.com}
+      OPEN_METEO_HISTORICAL_URL: ${OPEN_METEO_HISTORICAL_URL:-https://historical-forecast-api.open-meteo.com}
       NAGER_DATE_URL: ${NAGER_DATE_URL:-https://date.nager.at}
       COUNTRY_CODE: ${COUNTRY_CODE:-DE}
-      LIBRARY_LAT: ${LIBRARY_LAT}
-      LIBRARY_LON: ${LIBRARY_LON}
+      HOLIDAY_SUBDIVISION: ${HOLIDAY_SUBDIVISION:-DE-BB}
       TZ: Europe/Berlin
       NODE_ENV: ${NODE_ENV:-production}
+      BACKUP_PATH: /app/backups
+    volumes:
+      - ./db/backups:/app/backups
 
   frontend:
     build:
@@ -91,11 +94,3 @@ services:
 volumes:
   db_data:
   model_store:
-
-
-networks:
-  default:
-    name: datenwurst_net
-    ipam:
-      config:
-        - subnet: 10.250.0.0/24

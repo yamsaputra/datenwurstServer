@@ -13,8 +13,12 @@ interface ForecastPoint {
 interface WidgetData {
   occupancy: number;
   max_occupancy: number;
+  capacity_label: string;
   percent: number;
   widget_title: string;
+  active_source: 'lstm' | 'baseline' | 'collecting_data';
+  data_days_available: number;
+  forecast_horizon_hours?: number;
   forecasts_hours: ForecastPoint[];
   forecasts_week: ForecastPoint[];
 }
@@ -208,7 +212,7 @@ export default function WidgetPage() {
               </div>
               <p className="mt-1 text-4xl font-normal leading-none tracking-[-0.02em]">{data.occupancy}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                von {data.max_occupancy} Plätzen belegt
+                von {data.max_occupancy} Plätzen im {data.capacity_label} belegt
               </p>
             </div>
           </div>
@@ -218,6 +222,9 @@ export default function WidgetPage() {
               <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                 <CalendarDays size={14} />
                 Prognose
+                <span className="ml-auto normal-case tracking-normal text-[10px] text-muted-foreground/70">
+                  {data.active_source === 'lstm' ? 'Modellprognose' : 'typische Auslastung'}
+                </span>
               </div>
 
               <div className="mb-4 grid grid-cols-5 gap-1.5">
@@ -318,7 +325,9 @@ export default function WidgetPage() {
             </div>
           ) : (
             <p className="rounded-md border border-border bg-bg-raised p-3 text-xs text-muted-foreground">
-              Für die kommenden Tage liegt noch keine Prognose vor.
+              {data.active_source === 'collecting_data'
+                ? 'Es werden noch Daten gesammelt — eine Prognose liegt noch nicht vor.'
+                : 'Für die kommenden Tage liegt noch keine Prognose vor.'}
             </p>
           )}
 

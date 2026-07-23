@@ -13,6 +13,17 @@ export function encodeFeatures(interval, stats) {
 
   const lagNorm = (v) => normalise(v ?? 0, stats.occMean, stats.occStd);
 
+  // Replaces the old single is_semester boolean (permanently TRUE in every
+  // pilot row, since semester_breaks was seeded empty -- it carried zero
+  // information). Exam and lecture periods share opening hours but are
+  // expected to differ in occupancy pattern, which a single boolean can't
+  // represent. Unrecognised/missing period_type (should not happen for any
+  // finalized row -- see Phase 5's valid-windows check) encodes as all-zero
+  // rather than throwing, since this function must stay usable defensively.
+  const isLecture = interval.period_type === 'lecture' ? 1 : 0;
+  const isExam    = interval.period_type === 'exam'    ? 1 : 0;
+  const isBreak   = interval.period_type === 'break'   ? 1 : 0;
+
   return [
     Math.sin(TWO_PI * h   / 24),
     Math.cos(TWO_PI * h   / 24),
@@ -22,8 +33,10 @@ export function encodeFeatures(interval, stats) {
     Math.cos(TWO_PI * dow / 7),
     Math.sin(TWO_PI * woy / 52),
     Math.cos(TWO_PI * woy / 52),
-    interval.is_holiday  ? 1 : 0,
-    interval.is_semester ? 0 : 1,
+    interval.is_holiday ? 1 : 0,
+    isLecture,
+    isExam,
+    isBreak,
     temp,
     precip,
     code,

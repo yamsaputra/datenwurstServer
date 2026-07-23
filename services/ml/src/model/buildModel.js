@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs-node';
 
 const LOOKBACK  = 8;   // 4 hours of 30-min slots
 const HORIZON   = 16;  // 8 hours of output
-const FEATURES  = 18;
+const FEATURES  = 20;  // was 18: is_semester (1 bool) replaced by a lecture/exam/break one-hot (3 dims), net +2
 
 export function buildModel() {
   const model = tf.sequential();

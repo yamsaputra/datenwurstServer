@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { nowIso } from './logger.js';
 
 // pg returns NUMERIC/DECIMAL columns (e.g. weather_temp, weather_precip) as
 // strings by default to avoid float precision loss; parse them as numbers
@@ -14,6 +15,6 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
 });
 
-pool.on('error', (err) => console.error('DB error:', err.message));
+pool.on('error', (err) => console.error(`[db][${nowIso()}] DB error:`, err.message));
 
 export default pool;

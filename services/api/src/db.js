@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { nowIso } from './lib/logger.js';
 
 // pg returns NUMERIC/DECIMAL columns (e.g. predicted_occ, weather_temp) as
 // strings by default to avoid float precision loss; parse them as numbers
@@ -15,7 +16,7 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected database error:', err.message);
+  console.error(`[api][${nowIso()}] Unexpected database error:`, err.message);
 });
 
 export default pool;

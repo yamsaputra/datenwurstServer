@@ -8,7 +8,11 @@ import { Input } from '@/components/ui/input';
 
 interface RetrainResult {
   version_id: number;
+  status?: 'active' | 'rejected' | 'skipped';
   mae_final: number | null;
+  holdout_mae?: number | null;
+  baseline_mae?: number | null;
+  skip_reason?: string;
   forecasts_generated?: number;
 }
 
@@ -43,13 +47,24 @@ export default function RetrainButton({ isTraining = false, onStarted, onComplet
         ? { from: from || undefined, to: to || undefined }
         : {};
       const result = await post<RetrainResult>('/ml/retrain', body);
-      const mae = Number.isFinite(Number(result.mae_final))
-        ? ` (MAE ${Number(result.mae_final).toFixed(2)})`
-        : '';
-      const forecasts = result.forecasts_generated
-        ? ` Die Prognose wurde direkt neu berechnet.`
-        : '';
-      setMessage(`Training abgeschlossen — Modell v${result.version_id} ist jetzt aktiv${mae}.${forecasts}`);
+
+      if (result.status === 'skipped') {
+        setFailed(false);
+        setMessage(`Training übersprungen: ${result.skip_reason ?? 'nicht genügend Daten.'}`);
+      } else if (result.status === 'rejected') {
+        setFailed(false);
+        const holdout = Number.isFinite(Number(result.holdout_mae)) ? Number(result.holdout_mae).toFixed(2) : '–';
+        const baseline = Number.isFinite(Number(result.baseline_mae)) ? Number(result.baseline_mae).toFixed(2) : '–';
+        setMessage(
+          `Training abgeschlossen, Modell v${result.version_id} wurde jedoch NICHT aktiviert — ` +
+          `Holdout-MAE ${holdout} war nicht besser als die Baseline (${baseline}). ` +
+          `Es wird weiter die bisherige Prognose verwendet.`
+        );
+      } else {
+        const mae = Number.isFinite(Number(result.mae_final)) ? ` (MAE ${Number(result.mae_final).toFixed(2)})` : '';
+        const forecasts = result.forecasts_generated ? ` Die Prognose wurde direkt neu berechnet.` : '';
+        setMessage(`Training abgeschlossen — Modell v${result.version_id} ist jetzt aktiv${mae}.${forecasts}`);
+      }
       onComplete?.();
     } catch (err: unknown) {
       setFailed(true);

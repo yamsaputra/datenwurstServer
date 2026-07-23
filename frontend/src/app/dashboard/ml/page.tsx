@@ -158,7 +158,21 @@ export default function MLPage() {
                 Dauert je nach Datenmenge einige Minuten — die Seite kann dabei geöffnet bleiben.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-3">
+              {meta?.training_ready && (
+                <p className="rounded-md border border-success/20 bg-success/10 p-3 text-xs text-success">
+                  Genug Daten gesammelt ({meta.valid_windows} von {meta.min_training_windows} benötigten
+                  Trainingsfenstern) — ein Training wird empfohlen.
+                </p>
+              )}
+              {meta && typeof meta.data_days_available === 'number' &&
+                meta.data_days_available < (meta.min_training_days_recommended ?? 182) && (
+                <p className="rounded-md border border-warning/20 bg-warning/10 p-3 text-xs text-warning">
+                  Nur {meta.data_days_available} Tage an Daten vorhanden — für ein stabiles Modell werden
+                  mindestens {Math.round((meta.min_training_days_recommended ?? 182) / 30)} Monate empfohlen.
+                  Das Training kann trotzdem gestartet werden.
+                </p>
+              )}
               <RetrainButton isTraining={status?.is_training ?? false} onComplete={fetchStatus} />
             </CardContent>
           </Card>
@@ -222,7 +236,8 @@ export default function MLPage() {
                 onChange={e => setMaxOcc(e.target.value)}
               />
               <p className="mt-1.5 text-xs text-muted-foreground">
-                Anzahl Plätze — Bezugsgröße für Prozentwerte und Statusfarben.
+                Anzahl Plätze im Lernbereich — der Sensor erfasst nur den Haupteingang des
+                Lernbereichs, nicht das gesamte Gebäude. Bezugsgröße für Prozentwerte und Statusfarben.
               </p>
             </div>
 

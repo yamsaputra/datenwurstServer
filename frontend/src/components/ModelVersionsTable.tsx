@@ -46,6 +46,10 @@ export default function ModelVersionsTable({ versions }: Props) {
                 <td className="px-3 py-2.5">
                   {v.is_active ? (
                     <Badge variant="success">Aktiv</Badge>
+                  ) : v.status === 'rejected' ? (
+                    <Badge variant="destructive" title={v.skip_reason ?? undefined}>Abgelehnt</Badge>
+                  ) : v.status === 'skipped' ? (
+                    <Badge variant="outline" title={v.skip_reason ?? undefined}>Übersprungen</Badge>
                   ) : (
                     <span className="text-muted-foreground">Archiviert</span>
                   )}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Activity, AlertCircle, CheckCircle } from 'lucide-react';
+import { Activity, AlertCircle, CheckCircle, XCircle, HelpCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export interface ModelVersion {
@@ -12,12 +12,24 @@ export interface ModelVersion {
   loss_final: number;
   mae_final: number;
   is_active: boolean;
+  status?: 'trained' | 'skipped' | 'rejected' | 'active' | 'baseline';
+  valid_windows?: number | null;
+  holdout_mae?: number | null;
+  baseline_mae?: number | null;
+  skip_reason?: string | null;
+  feature_count?: number | null;
 }
 
 export interface ForecastMeta {
   upcoming_intervals: number;
   horizon: string | null;
   generated_at: string | null;
+  active_source?: 'lstm' | 'baseline' | 'collecting_data';
+  data_days_available?: number;
+  min_training_days_recommended?: number;
+  training_ready?: boolean;
+  valid_windows?: number | null;
+  min_training_windows?: number;
 }
 
 interface Props {
@@ -35,21 +47,28 @@ const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('de-DE');
 
 export default function ModelStatusCard({ isTraining, activeVersion, versions, meta }: Props) {
   const active = versions.find(v => v.is_active) ?? versions.find(v => v.id === activeVersion);
+  const latest = versions[0];
+  // The most recent run wasn't promoted -- show *why*, since "six
+  // consecutive models were promoted, none of which beat a constant" is
+  // exactly the failure mode the promotion gate exists to make visible.
+  const latestUnpromoted = !active && latest && (latest.status === 'skipped' || latest.status === 'rejected') ? latest : null;
 
   const tiles = active
     ? [
         { label: 'Aktive Version', value: `v${active.id}`, hint: `trainiert am ${fmtDate(active.created_at)}` },
         {
-          label: 'MAE',
-          value: fmtMetric(active.mae_final, 2),
-          hint: 'Ø Abweichung in Personen pro Intervall',
+          label: 'MAE (Holdout)',
+          value: fmtMetric(active.holdout_mae ?? active.mae_final, 2),
+          hint: active.baseline_mae != null
+            ? `vs. Baseline ${fmtMetric(active.baseline_mae, 2)} (typische Auslastung)`
+            : 'Ø Abweichung in Personen pro Intervall',
         },
         { label: 'Loss (final)', value: fmtMetric(active.loss_final, 4), hint: 'Trainingsfehler der letzten Epoche' },
-        { label: 'Epochen', value: String(active.epochs ?? '–'), hint: 'Durchläufe über die Trainingsdaten' },
+        { label: 'Epochen', value: String(active.epochs ?? '–'), hint: 'bis Early Stopping griff' },
         {
           label: 'Trainingszeitraum',
           value: `${fmtDate(active.train_from)} – ${fmtDate(active.train_to)}`,
-          hint: 'verwendete historische Daten',
+          hint: active.valid_windows != null ? `${active.valid_windows} gültige Trainingsfenster` : 'verwendete historische Daten',
         },
         {
           label: 'Prognosehorizont',
@@ -78,6 +97,9 @@ export default function ModelStatusCard({ isTraining, activeVersion, versions, m
           <>
             <CheckCircle size={16} className="text-success" />
             <Badge variant="success">Modell v{active.id} aktiv</Badge>
+            {meta?.active_source && meta.active_source !== 'lstm' && (
+              <Badge variant="outline">Prognose läuft aktuell über Baseline</Badge>
+            )}
             {meta?.generated_at && (
               <span className="text-xs text-muted-foreground">
                 Prognosen zuletzt berechnet am{' '}
@@ -87,6 +109,23 @@ export default function ModelStatusCard({ isTraining, activeVersion, versions, m
                 Uhr
               </span>
             )}
+          </>
+        ) : latestUnpromoted?.status === 'rejected' ? (
+          <>
+            <XCircle size={16} className="text-danger" />
+            <Badge variant="destructive">Letztes Training v{latestUnpromoted.id} abgelehnt</Badge>
+            <span className="text-xs text-muted-foreground">
+              Holdout-MAE {fmtMetric(latestUnpromoted.holdout_mae, 2)} war nicht besser als die Baseline{' '}
+              {fmtMetric(latestUnpromoted.baseline_mae, 2)} — es wird weiter die Baseline-Prognose verwendet.
+            </span>
+          </>
+        ) : latestUnpromoted?.status === 'skipped' ? (
+          <>
+            <HelpCircle size={16} className="text-muted-foreground" />
+            <Badge variant="outline">Training übersprungen</Badge>
+            <span className="text-xs text-muted-foreground">
+              {latestUnpromoted.skip_reason ?? 'Nicht genügend Daten für ein Training.'}
+            </span>
           </>
         ) : (
           <>

@@ -11,6 +11,7 @@
 //   docker compose exec db pg_dump -U library_app library_occupancy > backup.sql
 
 import pg from 'pg';
+import { nowIso } from '../lib/logger.js';
 
 const TZ = 'Europe/Berlin';
 
@@ -34,25 +35,25 @@ try {
     WHERE oi.interval_start = sub.interval_start
       AND oi.occupancy IS DISTINCT FROM GREATEST(0, sub.running)
   `, [TZ]);
-  console.log(`occupancy recomputed for ${occ.rowCount} interval(s)`);
+  console.log(`[rebuild-history][${nowIso()}] occupancy recomputed for ${occ.rowCount} interval(s)`);
 
   const dow = await client.query(`
     UPDATE occupancy_intervals
     SET day_of_week = EXTRACT(ISODOW FROM interval_start AT TIME ZONE $1)::int - 1
     WHERE day_of_week IS DISTINCT FROM EXTRACT(ISODOW FROM interval_start AT TIME ZONE $1)::int - 1
   `, [TZ]);
-  console.log(`day_of_week corrected for ${dow.rowCount} interval(s)`);
+  console.log(`[rebuild-history][${nowIso()}] day_of_week corrected for ${dow.rowCount} interval(s)`);
 
   const nan = await client.query(`
     DELETE FROM forecasts WHERE predicted_occ = 'NaN'::numeric
   `);
-  console.log(`removed ${nan.rowCount} NaN forecast(s)`);
+  console.log(`[rebuild-history][${nowIso()}] removed ${nan.rowCount} NaN forecast(s)`);
 
   await client.query('COMMIT');
-  console.log('History rebuilt. Retrain the model afterwards so forecasts use the corrected data.');
+  console.log(`[rebuild-history][${nowIso()}] History rebuilt. Retrain the model afterwards so forecasts use the corrected data.`);
 } catch (err) {
   await client.query('ROLLBACK');
-  console.error('Rebuild failed, all changes rolled back:', err);
+  console.error(`[rebuild-history][${nowIso()}] Rebuild failed, all changes rolled back:`, err);
   process.exitCode = 1;
 } finally {
   client.release();

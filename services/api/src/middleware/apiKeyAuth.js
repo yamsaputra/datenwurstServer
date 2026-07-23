@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from 'crypto';
+import { nowIso } from '../lib/logger.js';
 
 const expectedKey = process.env.JETSON_API_KEY || '';
 const expectedBuf = Buffer.from(expectedKey);
@@ -18,7 +19,7 @@ export default function apiKeyAuth(req, res, next) {
   }
 
   if (!valid) {
-    console.warn(`[ingest] rejected auth from ${req.ip}`);
+    console.warn(`[ingest][${nowIso()}] rejected auth from ${req.ip}`);
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();

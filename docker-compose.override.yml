@@ -17,6 +17,7 @@ services:
   ml:
     volumes:
       - ./services/ml/src:/app/src:ro
+      - ./services/ml/test:/app/test:ro
       - model_store:/app/models
     environment:
       NODE_ENV: development
@@ -27,6 +28,7 @@ services:
   scheduler:
     volumes:
       - ./services/scheduler/src:/app/src:ro
+      - ./services/scheduler/test:/app/test:ro
     environment:
       NODE_ENV: development
     command: node --watch src/index.js

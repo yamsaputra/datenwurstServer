@@ -8,6 +8,7 @@ import mlRouter        from './routes/ml.js';
 import publicRouter    from './routes/public.js';
 import errorHandler    from './middleware/errorHandler.js';
 import { defaultLimiter } from './middleware/rateLimiter.js';
+import { nowIso } from './lib/logger.js';
 
 const app = express();
 
@@ -39,4 +40,4 @@ app.get('/health', (req, res) => res.json({ status: 'ok' }));
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`API listening on :${PORT}`));
+app.listen(PORT, () => console.log(`[api][${nowIso()}] API listening on :${PORT}`));
